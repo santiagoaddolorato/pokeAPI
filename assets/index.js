@@ -1,4 +1,5 @@
  const pokemonsContainer = document.querySelector("#caja");
+ const loader = document.querySelector(".pokeballs-container")
 
  const appState = {
     currentURL: "https://pokeapi.co/api/v2/pokemon/?limit=8&offset=0",
@@ -23,13 +24,12 @@
     return pokemonsData;    
  };
 
- pokemonTemplate = (pokemon) =>{
+ const pokemonTemplate = (pokemon) =>{
    return {
       image:pokemon.sprites.other.home.front_default,
       name:pokemon.name.toUpperCase(),
       experience:pokemon.base_experience,
       types: pokemon.types,
-      id:pokemon.id,
       height: pokemon.height / 10,
       weight:pokemon.weight / 10,
    };
@@ -43,7 +43,7 @@
  }
 
  const pokemonCardTemplate = (pokemon) =>{
-   const {image, name, experience, types, id, height, weight}
+   const {image, name, experience, types, height, weight}
     = pokemonTemplate(pokemon);
    return `
    <div class="poke">
@@ -51,7 +51,6 @@
       <h2>${name}</h2>
       <span class="exp">EXP: ${experience}</span>
       <div class="tipo-poke">${createTypeSpan(types)}</div>
-      <p class="id-poke">#${id}ID</p>
       <p class="height">Height: ${height}m</p>
       <p class="weight">Weight: ${weight}g</p>
 </div>
@@ -69,10 +68,34 @@
     const pokemonsData = await getPokemonsData();
     renderingFunction(pokemonsData);
  };
- 
+ const renderOnScroll = (pokemonList)=>{
+    loader.classList.toggle("show");
+    setTimeout(()=>{
+      loader.classList.toggle("show");
+      renderPokemonList(pokemonList)
+      appState.isfetching = false;
+    }, 1500)
+ };
+
+ const isEndOnPage = ()=>{
+   const {scrollTop, clientHeight, scrollHeight} =  document.documentElement
+    const bottom = scrollTop + clientHeight >= scrollHeight -2;
+    return bottom
+}
+
+ const loadNextPokemons = async ()=>{
+   if(isEndOnPage() && !appState.isfetching){
+      appState.isfetching = true;
+      loadAndRenderPokemons(renderOnScroll);
+   }
+ }
+
  function init() {
     window.addEventListener("DOMContentLoaded",
     async ()=>  await loadAndRenderPokemons(renderPokemonList));
+    window.addEventListener("scroll", async ()=>{
+      await loadNextPokemons();
+    })
  }
 
  init();
